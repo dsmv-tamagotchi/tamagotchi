@@ -69,3 +69,18 @@ export const isAlive = (tamagotchi: Readonly<Tamagotchi>): boolean => {
 
   return constraints.filter((constraint: boolean) => !constraint).length === 0;
 };
+
+export const TICK_MS = 5000;
+
+export const passTime = (tamagotchi: Readonly<Tamagotchi>, ticks: number = 1): Tamagotchi => {
+  if (tamagotchi.isSleeping || ticks <= 0) {
+    return tamagotchi;
+  };
+
+  return {
+    ...tamagotchi,
+    energy: clamp(tamagotchi.energy - (0.01 * ticks), 0, 1),
+    hunger: clamp(tamagotchi.hunger - (0.01 * ticks), 0, 1),
+    happinness: clamp(tamagotchi.happiness - (0.01 * ticks), 0, 1),
+  };
+};
