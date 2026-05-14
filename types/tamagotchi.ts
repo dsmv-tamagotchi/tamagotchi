@@ -3,6 +3,7 @@ export interface Tamagotchi {
   happiness: number;
   hunger: number;
   isSleeping: boolean;
+  dirtyLevel: number;
   name: string;
   sleepStartedAt?: Date;
 }
@@ -10,14 +11,21 @@ export interface Tamagotchi {
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const increase = (value: number) => clamp(value + 0.1, 0, 1);
+const increaseSmall = (value: number) => clamp(value + 0.04, 0, 1);
+const increaseBig = (value: number) => clamp(value + 0.15, 0, 1);
 
 const decrease = (value: number) => clamp(value - 0.1, 0, 1);
+const decreaseSmall = (value: number) => clamp(value -0.05, 0, 1);
 
 export const feed = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
+  if(tamagotchi.hunger <=0){
+    return tamagotchi;
+  }
   return {
     ...tamagotchi,
-    happiness: increase(tamagotchi.happiness),
+    happiness: increaseSmall(tamagotchi.happiness),
     hunger: decrease(tamagotchi.hunger),
+    energy: increaseSmall(tamagotchi.energy),
   };
 };
 
@@ -26,6 +34,16 @@ export const play = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
     ...tamagotchi,
     energy: decrease(tamagotchi.energy),
     happiness: increase(tamagotchi.happiness),
+    //ao brincar ele vai ficando sujo
+    dirtyLevel: increaseSmall(tamagotchi.dirtyLevel),
+    hunger: increaseSmall(tamagotchi.hunger),
+  };
+};
+
+export const wash = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
+  return {
+    ...tamagotchi,
+    dirtyLevel: 0,
   };
 };
 
@@ -37,7 +55,7 @@ export const sleep = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
   return {
     ...tamagotchi,
     isSleeping: true,
-    sleepStartedAt: new Date(),
+    sleepStartedAt: Date.now(),
   };
 };
 
@@ -46,7 +64,7 @@ export const wakeUp = (tamagotchi: Readonly<Tamagotchi>, now: Date): Tamagotchi 
     return tamagotchi;
   }
 
-const timeSlept = now.getTime() - tamagotchi.sleepStartedAt.getTime();
+  const timeSlept = now - tamagotchi.sleepStartedAt;
 
   const recoveryInMs = 10000;
 
@@ -61,11 +79,28 @@ const timeSlept = now.getTime() - tamagotchi.sleepStartedAt.getTime();
 };
 
 export const isAlive = (tamagotchi: Readonly<Tamagotchi>): boolean => {
-  const constraints: boolean[] = [
-    tamagotchi.energy > 0.25,
-    tamagotchi.hunger !== 1,
-    tamagotchi.happiness !== 0
+  const dead: boolean[] = [
+    tamagotchi.energy <= 0.20,
+    tamagotchi.hunger === 0.90,
+    tamagotchi.happiness === 0.10
   ];
 
-  return constraints.filter((constraint: boolean) => !constraint).length === 0;
+  return dead.filter(condition => condition).length !== 3;//continua vivo se não atender as 3 condições acima
+};
+
+
+export const TICK_MS = 5000;
+
+export const passTime = (tamagotchi: Readonly<Tamagotchi>, ticks: number = 1): Tamagotchi => {
+  if (tamagotchi.isSleeping || ticks <= 0) {
+    return tamagotchi;
+  };
+
+  return {
+    ...tamagotchi,
+    energy: clamp(tamagotchi.energy - (0.01 * ticks), 0, 1),
+    hunger: clamp(tamagotchi.hunger + (0.01 * ticks), 0, 1), // a fome tem que aumentar com o tempo
+    happiness: clamp(tamagotchi.happiness - (0.01 * ticks), 0, 1),
+    dirtyLevel: clamp(tamagotchi.dirtyLevel + (0.01*ticks), 0, 1) // sujeira aumenta com o tempo
+  };
 };
