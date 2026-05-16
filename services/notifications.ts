@@ -1,15 +1,16 @@
-import * as Notifications from 'expo-notifications';
+import { Alert } from 'react-native';
 
-export async function requestPermission() {
-  await Notifications.requestPermissionsAsync();
-}
+export class NotificationService {
+  static async requestPermissions(): Promise<boolean> {
+    return true; 
+  }
 
-export async function sendTestNotification(message: string) {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "Alerta, to",
-      body: message,
-    },
-    trigger: null
-  });
+  static async sendLocalNotification(title: string, body: string) {
+    Alert.alert(
+      title,
+      body,
+      [{ text: 'OK', onPress: () => console.log('Alert closed') }],
+      { cancelable: true }
+    );
+  }
 }
