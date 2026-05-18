@@ -92,7 +92,7 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>{tama.name}</Text>
-
+      
       <View style={[styles.avatar, { backgroundColor: getAvatarColor() }]}>
         <Text style={styles.avatarLabel}>
           {getAvatarFace()}
@@ -104,30 +104,30 @@ export default function App() {
         <Text style={styles.statusText}>Felicidade: {(tama.happiness * 100).toFixed(0)}%</Text>
         <Text style={styles.statusText}>Fome: {(tama.hunger * 100).toFixed(0)}%</Text>
         <Text style={styles.statusText}>Sujeira: {(tama.dirtyLevel * 100).toFixed(0)}%</Text>
-
+        
         <View style={styles.divider} />
 
         <Text style={[styles.statusText, { color: vivo ? 'green' : 'red', fontWeight: 'bold' }]}>
           Status: {vivo ? 'Ativo' : 'Inativo'}
         </Text>
-
+        
         <Text style={styles.statusText}>
           Estado: {tama.isSleeping ? "Dormindo" : "Acordado"}
         </Text>
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[styles.button, !vivo && styles.buttonDisabled]}
-          onPress={handleFeed}
+        <TouchableOpacity 
+          style={[styles.button, !vivo && styles.buttonDisabled]} 
+          onPress={handleFeed} 
           disabled={!vivo}
         >
           <Text style={styles.buttonText}>Alimentar</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, !vivo && styles.buttonDisabled]}
-          onPress={handlePlay}
+        
+        <TouchableOpacity 
+          style={[styles.button, !vivo && styles.buttonDisabled]} 
+          onPress={handlePlay} 
           disabled={!vivo}
         >
           <Text style={styles.buttonText}>Brincar</Text>

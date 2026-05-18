@@ -88,7 +88,6 @@ export const isAlive = (tamagotchi: Readonly<Tamagotchi>): boolean => {
   return dead.filter(condition => condition).length !== 3;//continua vivo se não atender as 3 condições acima
 };
 
-
 export const TICK_MS = 5000;
 
 export const passTime = (tamagotchi: Readonly<Tamagotchi>, ticks: number = 1): Tamagotchi => {
