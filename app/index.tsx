@@ -14,10 +14,11 @@ export default function Index() {
   );
 }*/
 
-import { useState } from "react";
-import { Button, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
 
-import { Tamagotchi, feed, play, sleep, wakeUp } from "../types/tamagotchi";
+import { AppState, AppStateStatus, Button, Text, View } from "react-native";
+
+import { Tamagotchi, feed, isAlive, play, sleep, wakeUp } from "../types/tamagotchi";
 
 export default function Home() {
   const [pet, setPet] = useState<Tamagotchi>({
@@ -28,6 +29,46 @@ export default function Home() {
     name: "Tama",
     sleepStartedAt: undefined,
   });
+
+  const appState = useRef(AppState.currentStats);
+
+  const lastTickTime = useRef(Date.now());
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    const interval = setInterval(() => {
+      if (appState.current === 'active' && isAlive(tamagotchi)) {
+        setPet(previous => passTime(previous, 1));
+
+        lastTickTime.current = Date.now();
+      }
+    }, TICK_MS);
+
+    return () => {
+      subscription.remove();
+
+      clearInterval(interval);
+    };
+  }, [pet]);
+
+  const handleAppStateChange = (nextAppState: AppStateStatus) => {
+    if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+      const now = Date.now();
+
+      const elapsedMs = now - lastTickTime.current;
+
+      const ticksToApply = Math.floor(elapsedMs / TICK_MS);
+
+      if (ticksToApply > 0) {
+        setPet(previous => passTime(previous, ticksToApply));
+      }
+
+      lastTickTime.current = now;
+    }
+
+    appState.current = nextAppState;
+  };
 
   return (
     <View style={{ marginTop: 50 }}>
@@ -46,4 +87,3 @@ export default function Home() {
     </View>
   );
 }
-
