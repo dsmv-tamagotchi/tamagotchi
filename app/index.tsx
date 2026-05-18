@@ -1,21 +1,63 @@
-import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { feed, isAlive, play, sleep, Tamagotchi, wakeUp, wash } from '../types/tamagotchi';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { feed, isAlive, passTime, play, sleep, Tamagotchi, TICK_MS, wakeUp, wash } from '../types/tamagotchi';
 
 export default function App() {
   const [tama, setTama] = useState<Tamagotchi>({
     name: "Tamagotchi",
     energy: 1.0,
-    happiness: 0.4,
-    hunger: 0.7,
+    happiness: 1.0,
+    hunger: 1.0,
     isSleeping: false,
-    dirtyLevel: 0,
+    dirtyLevel: 1.0,
   });
+
+  const appState = useRef(AppState.currentState);
+
+  const lastTickTime = useRef(Date.now());
 
   const vivo = isAlive(tama);
 
-  
-  const getAvatarColor = () => {
+  const handleAppStateChange = (nextAppState: AppStateStatus) => {
+    if (
+      appState.current.match(/inactive|background/) &&
+      nextAppState === 'active'
+    ) {
+      const now = Date.now();
+
+      const elapsedMs = now - lastTickTime.current;
+
+      const ticksToApply = Math.floor(elapsedMs / TICK_MS);
+
+      if (ticksToApply > 0) {
+        setTama(previous => passTime(previous, ticksToApply));
+      }
+
+      lastTickTime.current = now;
+    }
+
+    appState.current = nextAppState;
+  };
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    const interval = setInterval(() => {
+      if (appState.current === 'active' && isAlive(tama)) {
+        setTama(previous => passTime(previous, 1));
+
+        lastTickTime.current = Date.now();
+      }
+    }, TICK_MS);
+
+    return () => {
+      subscription.remove();
+
+      clearInterval(interval);
+    };
+  }, [tama]);
+
+ const getAvatarColor = () => {
     if (!vivo) return '#333333';             // Inativo (Cinza)
     if (tama.isSleeping) return '#9C27B0';    // Dormindo (Roxo)
     if (tama.energy <= 0.5) return '#2196F3';  // Cansado (Azul)
@@ -26,7 +68,7 @@ export default function App() {
   };
 
   const getAvatarFace = () => {
-    if (!vivo) return "X_X"; 
+    if (!vivo) return "X_X";
     if (tama.isSleeping) return "zzz";
     if (tama.energy <= 0.5) return "-_-";
     if (tama.happiness <= 0.4) return "T-T";
@@ -45,46 +87,6 @@ export default function App() {
     } else {
       setTama(wakeUp(tama, new Date()));
     }
-  };
-
-  const appState = useRef(AppState.currentStats);
-
-  const lastTickTime = useRef(Date.now());
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-
-    const interval = setInterval(() => {
-      if (appState.current === 'active' && isAlive(tamagotchi)) {
-        setPet(previous => passTime(previous, 1));
-
-        lastTickTime.current = Date.now();
-      }
-    }, TICK_MS);
-
-    return () => {
-      subscription.remove();
-
-      clearInterval(interval);
-    };
-  }, [pet]);
-
-  const handleAppStateChange = (nextAppState: AppStateStatus) => {
-    if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-      const now = Date.now();
-
-      const elapsedMs = now - lastTickTime.current;
-
-      const ticksToApply = Math.floor(elapsedMs / TICK_MS);
-
-      if (ticksToApply > 0) {
-        setPet(previous => passTime(previous, ticksToApply));
-      }
-
-      lastTickTime.current = now;
-    }
-
-    appState.current = nextAppState;
   };
 
   return (
@@ -131,20 +133,20 @@ export default function App() {
           <Text style={styles.buttonText}>Brincar</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.button, !vivo && styles.buttonDisabled]} 
-          onPress={handleWash} 
+        <TouchableOpacity
+          style={[styles.button, !vivo && styles.buttonDisabled]}
+          onPress={handleWash}
           disabled={!vivo || tama.dirtyLevel === 0}
         >
           <Text style={styles.buttonText}>Banho</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
-            styles.button, 
+            styles.button,
             tama.isSleeping ? styles.buttonActive : styles.buttonDefault,
             !vivo && styles.buttonDisabled
-          ]} 
+          ]}
           onPress={handleSleepAction}
           disabled={!vivo}
         >
@@ -158,18 +160,18 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: '#f0f0f0' 
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0'
   },
-  title: { 
-    fontSize: 28, 
-    fontWeight: 'bold', 
-    marginBottom: 20 
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 20
   },
-  // --- configuracao do bixinho ---
+ // --- configuracao do bixinho ---
   avatar: {
     width: 120,
     height: 120,
