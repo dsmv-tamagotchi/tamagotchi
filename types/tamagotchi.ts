@@ -1,5 +1,6 @@
 export interface Tamagotchi {
     energy: number;
+    experience: number;
     happiness: number;
     hunger: number;
     isSleeping: boolean;
@@ -17,6 +18,13 @@ const increaseBig = (value: number) => clamp(value + 0.15, 0, 1);
 const decrease = (value: number) => clamp(value - 0.1, 0, 1);
 const decreaseSmall = (value: number) => clamp(value - 0.05, 0, 1);
 
+export const increaseExperience = (tamagotchi: Tamagotchi) => {
+    return {
+        ...tamagotchi,
+        experience: increase(tamagotchi.experience),
+    };
+};
+
 export const feed = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
     if (tamagotchi.hunger <= 0) {
         return tamagotchi;
@@ -30,21 +38,21 @@ export const feed = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
 };
 
 export const play = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
-    return {
+    return increaseExperience({
         ...tamagotchi,
         energy: decrease(tamagotchi.energy),
         happiness: increase(tamagotchi.happiness),
         //ao brincar ele vai ficando sujo
         dirtyLevel: increaseSmall(tamagotchi.dirtyLevel),
         hunger: increaseSmall(tamagotchi.hunger),
-    };
+    });
 };
 
 export const wash = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
-    return {
+    return increaseExperience({
         ...tamagotchi,
         dirtyLevel: 0,
-    };
+    });
 };
 
 export const sleep = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
@@ -70,12 +78,12 @@ export const wakeUp = (tamagotchi: Readonly<Tamagotchi>, now: Date): Tamagotchi 
 
     const energyRecovery = (timeSlept / recoveryInMs) * 0.2;
 
-    return {
+    return increaseExperience({
         ...tamagotchi,
         isSleeping: false,
         sleepStartedAt: undefined,
         energy: clamp(tamagotchi.energy + energyRecovery, 0, 1),
-    };
+    });
 };
 
 export const isAlive = (tamagotchi: Readonly<Tamagotchi>): boolean => {
@@ -85,7 +93,8 @@ export const isAlive = (tamagotchi: Readonly<Tamagotchi>): boolean => {
         tamagotchi.happiness === 0.10
     ];
 
-    return dead.filter(condition => condition).length !== 3;//continua vivo se não atender as 3 condições acima
+    //continua vivo se não atender as condições acima
+    return dead.filter(condition => condition).length !== dead.length;
 };
 
 export const TICK_MS = 5000;
