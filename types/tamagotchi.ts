@@ -38,14 +38,13 @@ export const feed = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
 };
 
 export const play = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
-    return increaseExperience({
-        ...tamagotchi,
-        energy: decrease(tamagotchi.energy),
-        happiness: increase(tamagotchi.happiness),
-        //ao brincar ele vai ficando sujo
-        dirtyLevel: increaseSmall(tamagotchi.dirtyLevel),
-        hunger: increaseSmall(tamagotchi.hunger),
-    });
+  return {
+    ...tamagotchi,
+    energy: clamp(tamagotchi.energy - 0.04, 0, 1),       // Cai menos energia por carinho
+    happiness: clamp(tamagotchi.happiness + 0.04, 0, 1),   // Sobe felicidade mais suavemente
+    dirtyLevel: clamp(tamagotchi.dirtyLevel + 0.03, 0, 1),
+    hunger: clamp(tamagotchi.hunger + 0.03, 0, 1),
+  };
 };
 
 export const wash = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
@@ -53,6 +52,14 @@ export const wash = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
         ...tamagotchi,
         dirtyLevel: 0,
     });
+};
+
+// Nova regra: Limpeza gradual para o gesto de esfregar
+export const washGradual = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
+  return {
+    ...tamagotchi,
+    dirtyLevel: clamp(tamagotchi.dirtyLevel - 0.01, 0, 1), 
+  };
 };
 
 export const sleep = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
