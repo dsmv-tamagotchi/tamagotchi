@@ -1,86 +1,108 @@
-import { useState, useEffect } from "react";
-import { Tamagotchi, feed, play, sleep, wakeUp, isAlive } from "../types/tamagotchi";
-import { NotificationService } from "../services/notifications";
-
-const WARNING_THRESHOLD = 0.4; 
+import { useEffect, useRef, useState } from "react";
+import { AppState, AppStateStatus } from "react-native";
+import { TICK_MS, Tamagotchi, feed, isAlive, passTime, play, sleep, wakeUp, washGradual } from "../types/tamagotchi";
 
 export function useHomeViewModel() {
-  const [pet, setPet] = useState<Tamagotchi>({
+  const [tama, setTama] = useState<Tamagotchi>({
+    name: "Tamagotchi",
     energy: 1.0,
-    hunger: 0.5,
-    happiness: 0.5,
+    happiness: 1.0,
+    hunger: 1.0,
     isSleeping: false,
-    name: "Tama",
-    sleepStartedAt: undefined,
+    dirtyLevel: 1.0,
   });
 
-  const [warningsSent, setWarningsSent] = useState({
-    energy: false,
-    hunger: false,
-    happiness: false,
-    death: false,
-  });
+  const appState = useRef(AppState.currentState);
+  const lastTickTime = useRef(Date.now());
+  const lastPlayTime = useRef(0);
+  const lastWashTime = useRef(0);
 
-  useEffect(() => {
-    NotificationService.requestPermissions();
-  }, []);
+  const vivo = isAlive(tama);
 
-  useEffect(() => {
-    if (!isAlive(pet)) {
-      if (!warningsSent.death) {
-        NotificationService.sendLocalNotification("Oh não!", `${pet.name} morreu.`);
-        setWarningsSent(prev => ({ ...prev, death: true }));
+  const handleAppStateChange = (nextAppState: AppStateStatus) => {
+    if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+      const now = Date.now();
+      const elapsedMs = now - lastTickTime.current;
+      const ticksToApply = Math.floor(elapsedMs / TICK_MS);
+
+      if (ticksToApply > 0) {
+        setTama(previous => passTime(previous, ticksToApply));
       }
-      return;
+      lastTickTime.current = now;
     }
+    appState.current = nextAppState;
+  };
 
-    const updatedWarnings = { ...warningsSent };
-    let didChange = false;
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
 
-    if (pet.energy <= WARNING_THRESHOLD && !warningsSent.energy) {
-      NotificationService.sendLocalNotification("Sono!", `${pet.name} está ficando exausto!`);
-      updatedWarnings.energy = true;
-      didChange = true;
-    } else if (pet.energy > WARNING_THRESHOLD && warningsSent.energy) {
-      updatedWarnings.energy = false; 
-      didChange = true;
+    const interval = setInterval(() => {
+      if (appState.current === 'active' && isAlive(tama)) {
+        setTama(previous => passTime(previous, 1));
+        lastTickTime.current = Date.now();
+      }
+    }, TICK_MS);
+
+    return () => {
+      subscription.remove();
+      clearInterval(interval);
+    };
+  }, [tama]);
+
+  const handleFeed = () => setTama(previous => feed(previous));
+  
+  const handleGradualWash = () => {
+    const agora = Date.now();
+    if (agora - lastWashTime.current > 150) {
+      setTama(previous => washGradual(previous));
+      lastWashTime.current = agora;
     }
+  };
 
-    if (pet.happiness <= WARNING_THRESHOLD && !warningsSent.happiness) {
-      NotificationService.sendLocalNotification("Tédio!", `${pet.name} está muito triste. Brinque com ele!`);
-      updatedWarnings.happiness = true;
-      didChange = true;
-    } else if (pet.happiness > WARNING_THRESHOLD && warningsSent.happiness) {
-      updatedWarnings.happiness = false;
-      didChange = true;
+  const handlePlay = () => {
+    const agora = Date.now();
+    if (agora - lastPlayTime.current > 500) { 
+      setTama(previous => play(previous));
+      lastPlayTime.current = agora;
     }
+  };
 
-    const hungerDangerThreshold = 1 - WARNING_THRESHOLD;
-    if (pet.hunger >= hungerDangerThreshold && !warningsSent.hunger) {
-      NotificationService.sendLocalNotification("Fome!", `${pet.name} está morrendo de fome!`);
-      updatedWarnings.hunger = true;
-      didChange = true;
-    } else if (pet.hunger < hungerDangerThreshold && warningsSent.hunger) {
-      updatedWarnings.hunger = false;
-      didChange = true;
+  const handleSleepAction = () => {
+    if (!tama.isSleeping) {
+      setTama(sleep(tama));
+    } else {
+      setTama(wakeUp(tama, Date.now()));
     }
+  };
 
-    if (didChange) {
-      setWarningsSent(updatedWarnings);
-    }
-  }, [pet, warningsSent]);
+  const getAvatarColor = () => {
+    if (!vivo) return '#333333';             
+    if (tama.isSleeping) return '#9C27B0';    
+    if (tama.energy <= 0.5) return '#2196F3';  
+    if (tama.happiness <= 0.4) return '#F44336'; 
+    if (tama.hunger >= 0.7) return '#FFEB3B';  
+    if (tama.dirtyLevel >= 1.0) return '#849483'; 
+    return '#4CAF50';                         
+  };
 
-  const handleFeed = () => setPet(prev => feed(prev));
-  const handlePlay = () => setPet(prev => play(prev));
-  const handleSleep = () => setPet(prev => sleep(prev));
-  const handleWakeUp = () => setPet(prev => wakeUp(prev, new Date()));
+  const getAvatarFace = () => {
+    if (!vivo) return "X_X";
+    if (tama.isSleeping) return "zzz";
+    if (tama.energy <= 0.5) return "-_-";
+    if (tama.happiness <= 0.4) return "T-T";
+    if (tama.hunger >= 0.7) return "o_o";
+    if (tama.dirtyLevel >= 1.0) return "#_#";
+    return ">u<";
+  };
 
   return {
-    pet,
-    isPetAlive: isAlive(pet),
+    tama,
+    vivo,
+    avatarColor: getAvatarColor(),
+    avatarFace: getAvatarFace(),
     handleFeed,
+    handleGradualWash,
     handlePlay,
-    handleSleep,
-    handleWakeUp,
+    handleSleepAction
   };
 }
