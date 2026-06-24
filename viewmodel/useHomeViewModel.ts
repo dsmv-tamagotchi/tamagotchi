@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import { TICK_MS, Tamagotchi, feed, isAlive, passTime, play, sleep, wakeUp, washGradual } from "../types/tamagotchi";
 
+export type BaseAvatarState = "FELIZ" | "NEUTRO" | "MORTO";
+
 export function useHomeViewModel() {
   const [tama, setTama] = useState<Tamagotchi>({
-    name: "Tamagotchi",
+    name: "Biscuit",
     energy: 1.0,
     happiness: 1.0,
     hunger: 1.0,
@@ -75,31 +77,28 @@ export function useHomeViewModel() {
     }
   };
 
-  const getAvatarColor = () => {
-    if (!vivo) return '#333333';             
-    if (tama.isSleeping) return '#9C27B0';    
-    if (tama.energy <= 0.5) return '#2196F3';  
-    if (tama.happiness <= 0.4) return '#F44336'; 
-    if (tama.hunger >= 0.7) return '#FFEB3B';  
-    if (tama.dirtyLevel >= 1.0) return '#849483'; 
-    return '#4CAF50';                         
-  };
-
-  const getAvatarFace = () => {
-    if (!vivo) return "X_X";
-    if (tama.isSleeping) return "zzz";
-    if (tama.energy <= 0.5) return "-_-";
-    if (tama.happiness <= 0.4) return "T-T";
-    if (tama.hunger >= 0.7) return "o_o";
-    if (tama.dirtyLevel >= 1.0) return "#_#";
-    return ">u<";
+  const getBaseAvatar = (): BaseAvatarState => {
+    if (!vivo) return "MORTO";
+    if (tama.isSleeping) return "NEUTRO";
+    
+    if (tama.energy <= 0.5 || tama.happiness <= 0.4 || tama.hunger >= 0.7 || tama.dirtyLevel >= 0.7) {
+      return "NEUTRO";
+    }
+    
+    return "FELIZ";
   };
 
   return {
     tama,
     vivo,
-    avatarColor: getAvatarColor(),
-    avatarFace: getAvatarFace(),
+    avatarBase: getBaseAvatar(),
+    alertas: {
+      comFome: vivo && !tama.isSleeping && tama.hunger >= 0.7,
+      cansado: vivo && !tama.isSleeping && tama.energy <= 0.5,
+      triste: vivo && !tama.isSleeping && tama.happiness <= 0.4,
+      sujo: vivo && !tama.isSleeping && tama.dirtyLevel >= 0.7,
+      dormindo: tama.isSleeping,
+    },
     handleFeed,
     handleGradualWash,
     handlePlay,
