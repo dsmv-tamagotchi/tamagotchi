@@ -8,7 +8,11 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
+import { rewards, isEligibleFor } from '../types/tamagotchi';
+
 import { BaseAvatarState, useHomeViewModel } from '../viewmodel/useHomeViewModel';
+
+const LOCKPAD: any = require('../assets/images/cadeado.png');
 
 const BASE_SPRITES: Record<BaseAvatarState, any> = {
   FELIZ: require('../assets/images/biscuit.png'),
@@ -98,6 +102,12 @@ export default function App() {
           <Stack.Screen options={{ headerShown: false }} />
 
           <Text style={styles.title}>{tama.name}</Text>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap'}}>
+          {rewards.map((reward, index) => {
+              return <Image key={index} source={isEligibleFor(tama, reward) ? reward.resource : LOCKPAD} style={{width: 100, height: 100, borderWidth: 1, borderColor: 'red'}} resizeMode="contain" />;
+          })}
+          </View>
           
           <GestureDetector gesture={petCarinhoGesture}>
             <View style={styles.avatarContainer}>
@@ -131,6 +141,7 @@ export default function App() {
           </GestureDetector>
 
           <View style={styles.statusCard}>
+            <Text style={styles.statusText}>XP: {tama.experience.toFixed(0)}</Text>
             <Text style={styles.statusText}>Energia: {(tama.energy * 100).toFixed(0)}%</Text>
             <Text style={styles.statusText}>Felicidade: {(tama.happiness * 100).toFixed(0)}%</Text>
             <Text style={styles.statusText}>Fome: {(tama.hunger * 100).toFixed(0)}%</Text>

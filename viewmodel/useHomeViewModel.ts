@@ -14,6 +14,7 @@ export function useHomeViewModel() {
     const [tama, setTama] = useState<Tamagotchi>({
         name: "Biscuit",
         energy: 1.0,
+        experience: 0.0,
         happiness: 1.0,
         hunger: 1.0,
         isSleeping: false,
@@ -27,12 +28,6 @@ export function useHomeViewModel() {
 
     const vivo = isAlive(tama);
 
-    const [accelerometerData, setAccelerometerData] = useState({
-        x: 0,
-        y: 0,
-        z: 0,
-    });
-
     const [accelerometerSubscription, setAccelerometerSubscription] = useState<any>(null);
 
     const subscribeToAccelerometerEvents = () => {
@@ -42,8 +37,6 @@ export function useHomeViewModel() {
 
         setAccelerometerSubscription(Accelerometer.addListener((data) => {
             const { x, y, z } = data;
-
-            setAccelerometerData({ x, y, z });
 
             const dx: number = Math.abs(x - lastX);
 
