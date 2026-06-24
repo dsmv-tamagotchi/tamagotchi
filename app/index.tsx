@@ -1,6 +1,13 @@
 import { Stack } from 'expo-router';
 import { Image, ImageBackground, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Accelerometer } from 'expo-sensors';
+
+import { useEffect, useState } from 'react';
+
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { BaseAvatarState, useHomeViewModel } from '../viewmodel/useHomeViewModel';
 
@@ -18,6 +25,8 @@ const OVERLAY_SPRITES = {
   SUJO: require('../assets/images/sujeira-icon.png'),
 };
 
+const SHAKE_THRESHOLD: number = 12.0;
+
 export default function App() {
   const {
     tama,
@@ -30,6 +39,50 @@ export default function App() {
     handleSleepAction
   } = useHomeViewModel();
 
+  // Configurações do Acelerômetro
+  const [data, setData] = useState({
+      x: 0,
+      y: 0,
+      z: 0,
+  });
+
+  const [subscription, setSubscription] = useState<any>(null);
+
+  const subscribe = () => {
+      Accelerometer.setUpdateInterval(100);
+
+      let lastX = 0, lastY = 0, lastZ = 0;
+
+      setSubscription(Accelerometer.addListener((accelerometerData) => {
+        const { x, y, z } = accelerometerData;
+
+        setData({ x, y , z });
+
+        const dx: number = Math.abs(x - lastX);
+
+        const dy: number = Math.abs(y - lastY);
+
+        const dz: number = Math.abs(z - lastZ);
+
+        if (dx + dy + dz > SHAKE_THRESHOLD) {
+            handlePlay();
+        }
+
+        lastX = x;
+
+        lastY = y;
+
+        lastZ = z;
+      }));
+  };
+
+  const unsubscribe = () => {
+      subscription && subscription.remove();
+
+      setSubscription(null);
+  };
+
+  //Configuração Física dos Gestos Animados
   const feedX = useSharedValue(0);
   const feedY = useSharedValue(0);
   const washX = useSharedValue(0);
@@ -79,6 +132,12 @@ export default function App() {
   const animatedWashStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: washX.value }, { translateY: washY.value }],
   }));
+
+  useEffect(() => {
+      subscribe();
+
+      return () => unsubscribe();
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

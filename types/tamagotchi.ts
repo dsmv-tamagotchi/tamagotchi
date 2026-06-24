@@ -8,6 +8,15 @@ export interface Tamagotchi {
   sleepStartedAt?: Date;
 }
 
+export interface Reward {
+    requiredExperience: number;
+    resource: string;
+}
+
+export const isEligibleFor = (tamagotchi: Tamagotchi, reward: Reward): boolean => {
+    return reward.requiredExperience <= tamagotchi.experience;
+};
+
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const increase = (value: number) => clamp(value + 0.1, 0, 1);
@@ -30,13 +39,13 @@ export const feed = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
 };
 
 export const play = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
-  return {
-    ...tamagotchi,
-    energy: clamp(tamagotchi.energy - 0.04, 0, 1),       // Cai menos energia por carinho
-    happiness: clamp(tamagotchi.happiness + 0.04, 0, 1),   // Sobe felicidade mais suavemente
-    dirtyLevel: clamp(tamagotchi.dirtyLevel + 0.03, 0, 1),
-    hunger: clamp(tamagotchi.hunger + 0.03, 0, 1),
-  };
+    return {
+        ...tamagotchi,
+        energy: clamp(tamagotchi.energy - 0.04, 0, 1),       // Cai menos energia por carinho
+        happiness: clamp(tamagotchi.happiness + 0.04, 0, 1),   // Sobe felicidade mais suavemente
+        dirtyLevel: clamp(tamagotchi.dirtyLevel + 0.03, 0, 1),
+        hunger: clamp(tamagotchi.hunger + 0.03, 0, 1),
+    };
 };
 
 export const wash = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
@@ -48,10 +57,10 @@ export const wash = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
 
 // Nova regra: Limpeza gradual para o gesto de esfregar
 export const washGradual = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
-  return {
-    ...tamagotchi,
-    dirtyLevel: clamp(tamagotchi.dirtyLevel - 0.1, 0, 1), 
-  };
+    return {
+        ...tamagotchi,
+        dirtyLevel: clamp(tamagotchi.dirtyLevel - 0.01, 0, 1),
+    };
 };
 
 export const sleep = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
