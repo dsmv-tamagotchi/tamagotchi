@@ -1,10 +1,12 @@
 import { Stack } from 'expo-router';
-import { Image, ImageBackground, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Image, ImageBackground, StyleSheet, Text, View } from 'react-native';
+
 import { Accelerometer } from 'expo-sensors';
 
 import { useEffect, useState } from 'react';
-
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 
