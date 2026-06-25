@@ -76,46 +76,48 @@ export const sleep = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
 };
 
 export const wakeUp = (tamagotchi: Readonly<Tamagotchi>, now: Date): Tamagotchi => {
-  if (!tamagotchi.isSleeping || !tamagotchi.sleepStartedAt) {
+  if (!tamagotchi.isSleeping) {
     return tamagotchi;
   }
-
-  const timeSlept = now - tamagotchi.sleepStartedAt;
-
-  const recoveryInMs = 10000;
-
-  const energyRecovery = (timeSlept / recoveryInMs) * 0.2;
 
   return {
     ...tamagotchi,
     isSleeping: false,
     sleepStartedAt: undefined,
-    energy: clamp(tamagotchi.energy + energyRecovery, 0, 1),
   };
 };
 
 export const isAlive = (tamagotchi: Readonly<Tamagotchi>): boolean => {
   const dead: boolean[] = [
     tamagotchi.energy <= 0.20,
-    tamagotchi.hunger === 0.90,
-    tamagotchi.happiness === 0.10
+    tamagotchi.hunger >= 0.90,   
+    tamagotchi.happiness <= 0.10
   ];
 
-  return dead.filter(condition => condition).length !== 3;//continua vivo se não atender as 3 condições acima
+  return dead.filter(condition => condition).length !== 3;
 };
 
 export const TICK_MS = 5000;
 
 export const passTime = (tamagotchi: Readonly<Tamagotchi>, ticks: number = 1): Tamagotchi => {
-  if (tamagotchi.isSleeping || ticks <= 0) {
-    return tamagotchi;
-  };
+  if (ticks <= 0) return tamagotchi;
 
+  // Se ele estiver dormindo, recupera energia progressivamente a cada tick
+  if (tamagotchi.isSleeping) {
+    const energyRecoveryPerTick = 0.05 * ticks;
+
+    return {
+      ...tamagotchi,
+      energy: clamp(tamagotchi.energy + energyRecoveryPerTick, 0, 1),
+    };
+  }
+
+  // Comportamento normal se ele estiver acordado
   return {
     ...tamagotchi,
     energy: clamp(tamagotchi.energy - (0.01 * ticks), 0, 1),
-    hunger: clamp(tamagotchi.hunger + (0.01 * ticks), 0, 1), // a fome tem que aumentar com o tempo
+    hunger: clamp(tamagotchi.hunger + (0.01 * ticks), 0, 1), 
     happiness: clamp(tamagotchi.happiness - (0.01 * ticks), 0, 1),
-    dirtyLevel: clamp(tamagotchi.dirtyLevel + (0.01*ticks), 0, 1) // sujeira aumenta com o tempo
+    dirtyLevel: clamp(tamagotchi.dirtyLevel + (0.01 * ticks), 0, 1) 
   };
 };
