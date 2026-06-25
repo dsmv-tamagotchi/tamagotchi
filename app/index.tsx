@@ -4,14 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Image, ImageBackground, StyleSheet, Text, View } from 'react-native';
 
-import { Accelerometer } from 'expo-sensors';
-
-import { useEffect, useState } from 'react';
-
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+
+import { rewards, isEligibleFor } from '../types/tamagotchi';
+
 import { BaseAvatarState, useHomeViewModel } from '../viewmodel/useHomeViewModel';
+
+const LOCKPAD: any = require('../assets/images/cadeado.png');
 
 const BASE_SPRITES: Record<BaseAvatarState, any> = {
   FELIZ: require('../assets/images/biscuit.png'),
@@ -27,8 +28,6 @@ const OVERLAY_SPRITES = {
   SUJO: require('../assets/images/sujeira-icon.png'),
 };
 
-const SHAKE_THRESHOLD: number = 12.0;
-
 export default function App() {
   const {
     tama,
@@ -40,49 +39,6 @@ export default function App() {
     handlePlay,
     handleSleepAction
   } = useHomeViewModel();
-
-  // Configurações do Acelerômetro
-  const [data, setData] = useState({
-      x: 0,
-      y: 0,
-      z: 0,
-  });
-
-  const [subscription, setSubscription] = useState<any>(null);
-
-  const subscribe = () => {
-      Accelerometer.setUpdateInterval(100);
-
-      let lastX = 0, lastY = 0, lastZ = 0;
-
-      setSubscription(Accelerometer.addListener((accelerometerData) => {
-        const { x, y, z } = accelerometerData;
-
-        setData({ x, y , z });
-
-        const dx: number = Math.abs(x - lastX);
-
-        const dy: number = Math.abs(y - lastY);
-
-        const dz: number = Math.abs(z - lastZ);
-
-        if (dx + dy + dz > SHAKE_THRESHOLD) {
-            handlePlay();
-        }
-
-        lastX = x;
-
-        lastY = y;
-
-        lastZ = z;
-      }));
-  };
-
-  const unsubscribe = () => {
-      subscription && subscription.remove();
-
-      setSubscription(null);
-  };
 
   //Configuração Física dos Gestos Animados
   const feedX = useSharedValue(0);
@@ -135,12 +91,6 @@ export default function App() {
     transform: [{ translateX: washX.value }, { translateY: washY.value }],
   }));
 
-  useEffect(() => {
-      subscribe();
-
-      return () => unsubscribe();
-  }, []);
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ImageBackground 
@@ -152,6 +102,12 @@ export default function App() {
           <Stack.Screen options={{ headerShown: false }} />
 
           <Text style={styles.title}>{tama.name}</Text>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap'}}>
+          {rewards.map((reward, index) => {
+              return <Image key={index} source={isEligibleFor(tama, reward) ? reward.resource : LOCKPAD} style={{width: 100, height: 100, borderWidth: 1, borderColor: 'red'}} resizeMode="contain" />;
+          })}
+          </View>
           
           <GestureDetector gesture={petCarinhoGesture}>
             <View style={styles.avatarContainer}>
@@ -185,6 +141,7 @@ export default function App() {
           </GestureDetector>
 
           <View style={styles.statusCard}>
+            <Text style={styles.statusText}>XP: {tama.experience.toFixed(0)}</Text>
             <Text style={styles.statusText}>Energia: {(tama.energy * 100).toFixed(0)}%</Text>
             <Text style={styles.statusText}>Felicidade: {(tama.happiness * 100).toFixed(0)}%</Text>
             <Text style={styles.statusText}>Fome: {(tama.hunger * 100).toFixed(0)}%</Text>
