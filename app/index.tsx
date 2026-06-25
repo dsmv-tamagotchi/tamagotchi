@@ -1,28 +1,14 @@
 import { Stack } from 'expo-router';
 import { Image, ImageBackground, StyleSheet, Text, View } from 'react-native';
+
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { rewards, isEligibleFor } from '../types/tamagotchi';
+
 import { BaseAvatarState, useHomeViewModel } from '../viewmodel/useHomeViewModel';
 
-interface ProgressBarProps {
-  emoji: string;
-  value: number; 
-  color: string;
-}
-
-function ProgressBar({ emoji, value, color }: ProgressBarProps) {
-  const percentage = Math.min(Math.max(value * 100, 0), 100);
-
-  return (
-    <View style={styles.barContainer}>
-      <Text style={styles.barEmoji}>{emoji}</Text>
-      <View style={styles.barTrack}>
-        <View style={[styles.barFill, { width: `${percentage}%`, backgroundColor: color }]} />
-      </View>
-    </View>
-  );
-}
+const LOCKPAD: any = require('../assets/images/cadeado.png');
 
 const BASE_SPRITES: Record<BaseAvatarState, any> = {
   FELIZ: require('../assets/images/biscuit.png'),
@@ -50,6 +36,7 @@ export default function App() {
     handleSleepAction
   } = useHomeViewModel();
 
+  //Configuração Física dos Gestos Animados
   const feedX = useSharedValue(0);
   const feedY = useSharedValue(0);
   const washX = useSharedValue(0);
@@ -110,6 +97,12 @@ export default function App() {
           <Stack.Screen options={{ headerShown: false }} />
 
           <Text style={styles.title}>{tama.name}</Text>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap'}}>
+          {rewards.map((reward, index) => {
+              return <Image key={index} source={isEligibleFor(tama, reward) ? reward.resource : LOCKPAD} style={{width: 100, height: 100, borderWidth: 1, borderColor: 'red'}} resizeMode="contain" />;
+          })}
+          </View>
           
           <GestureDetector gesture={petCarinhoGesture}>
             <View style={styles.avatarContainer}>
