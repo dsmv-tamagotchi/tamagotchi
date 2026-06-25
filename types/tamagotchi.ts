@@ -72,7 +72,6 @@ export const wash = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
     });
 };
 
-// Nova regra: Limpeza gradual para o gesto de esfregar
 export const washGradual = (tamagotchi: Readonly<Tamagotchi>): Tamagotchi => {
     return increaseExperience({
         ...tamagotchi,

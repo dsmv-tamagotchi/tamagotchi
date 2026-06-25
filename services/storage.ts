@@ -1,25 +1,29 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { type Tamagotchi } from '../types/tamagotchi';
 
-const TAMAGOTCHI_STORAGE_KEY: string = '@tamagotchi';
+const PETS_LIST_KEY = '@tamagotchi_list';
 
 export const saveTamagotchiState = async (tamagotchi: Tamagotchi): Promise<void> => {
-    try {
-        const state = JSON.stringify(tamagotchi);
-
-        await AsyncStorage.setItem(TAMAGOTCHI_STORAGE_KEY, state);
-    } catch (error) {
-        console.error('Failed to Save Tamagotchi State', error);
-    }
+  try {
+    const currentPets = await getAllTamagotchis();
+    currentPets[tamagotchi.name] = tamagotchi;
+    await AsyncStorage.setItem(PETS_LIST_KEY, JSON.stringify(currentPets));
+  } catch (error) {
+    console.error('Failed to Save Tamagotchi State', error);
+  }
 };
 
-export const getLastTamagotchiState = async (): Promise<Tamagotchi> => {
-    try {
-        const state = await AsyncStorage.getItem(TAMAGOTCHI_STORAGE_KEY);
+export const getAllTamagotchis = async (): Promise<Record<string, Tamagotchi>> => {
+  try {
+    const state = await AsyncStorage.getItem(PETS_LIST_KEY);
+    return state ? JSON.parse(state) : {};
+  } catch (error) {
+    console.error('Failed to Read Tamagotchi States', error);
+    return {};
+  }
+};
 
-        return JSON.parse(state);
-    } catch (error) {
-        console.error('Failed to Read Last Tamagotchi State', error);
-    }
+export const getTamagotchiByName = async (name: string): Promise<Tamagotchi | null> => {
+  const pets = await getAllTamagotchis();
+  return pets[name] || null;
 };
