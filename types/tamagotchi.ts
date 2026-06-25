@@ -119,7 +119,7 @@ export const isAlive = (tamagotchi: Readonly<Tamagotchi>): boolean => {
     ];
 
     //continua vivo se não atender as 3 condições acima
-    return dead.filter(condition => condition).length !== dead.legth;
+    return dead.filter(condition => condition).length !== dead.length;
 };
 
 export const TICK_MS = 5000;
