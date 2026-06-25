@@ -20,7 +20,6 @@ export const rewards: Reward[] = [
     { requiredExperience: 5, resource: require('../assets/images/ACC-lacinho.png') },
     { requiredExperience: 6, resource: require('../assets/images/ACC-nao-Intendo.png') },
     { requiredExperience: 12, resource: require('../assets/images/ACC-oculos.png') },
-    { requiredExperience: 16, resource: require('../assets/images/IF-scenery-DAY.png') },
 ];
 
 export const isEligibleFor = (tamagotchi: Tamagotchi, reward: Reward): boolean => {
@@ -125,18 +124,18 @@ export const TICK_MS = 5000;
 
 export const passTime = (tamagotchi: Readonly<Tamagotchi>, ticks: number = 1): Tamagotchi => {
 
-  if (ticks <= 0) return tamagotchi;
+    if (ticks <= 0) return tamagotchi;
 
-  // Se ele estiver dormindo, recupera energia progressivamente a cada tick
-  if (tamagotchi.isSleeping) {
-    const energyRecoveryPerTick = 0.05 * ticks;
+    // Se ele estiver dormindo, recupera energia progressivamente a cada tick
+    if (tamagotchi.isSleeping) {
+        const energyRecoveryPerTick = 0.05 * ticks;
 
-    return increaseExperience({
-      ...tamagotchi,
-      energy: clamp(tamagotchi.energy + energyRecoveryPerTick, 0, 1),
-    });
-  }
-  
+        return increaseExperience({
+            ...tamagotchi,
+            energy: clamp(tamagotchi.energy + energyRecoveryPerTick, 0, 1),
+        });
+    }
+
     return increaseExperience({
         ...tamagotchi,
         energy: clamp(tamagotchi.energy - (0.01 * ticks), 0, 1),

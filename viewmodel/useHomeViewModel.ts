@@ -2,7 +2,7 @@ import { Accelerometer } from 'expo-sensors';
 
 import { useEffect, useRef, useState } from "react";
 
-import { AppState, AppStateStatus } from "react-native";
+import { AppState, AppStateStatus, Platform } from "react-native";
 
 import { TICK_MS, Tamagotchi, feed, isAlive, passTime, play, sleep, wakeUp, washGradual } from "../types/tamagotchi";
 
@@ -31,6 +31,10 @@ export function useHomeViewModel() {
     const [accelerometerSubscription, setAccelerometerSubscription] = useState<any>(null);
 
     const subscribeToAccelerometerEvents = () => {
+        if (Platform.OS === 'web') {
+            return;
+        }
+
         Accelerometer.setUpdateInterval(100);
 
         let lastX = 0, lastY = 0, lastZ = 0;
@@ -57,6 +61,10 @@ export function useHomeViewModel() {
     };
 
     const unsubscribeFromAccelerometerEvents = () => {
+        if (Platform.OS === 'web') {
+            return;
+        }
+
         accelerometerSubscription && accelerometerSubscription.remove();
 
         setAccelerometerSubscription(null);

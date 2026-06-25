@@ -2,7 +2,10 @@ import { Stack } from 'expo-router';
 import { Image, ImageBackground, StyleSheet, Text, View } from 'react-native';
 
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { rewards, isEligibleFor } from '../types/tamagotchi';
 
@@ -23,6 +26,54 @@ const OVERLAY_SPRITES = {
   TRISTE: require('../assets/images/sadTear-icon.png'),
   SUJO: require('../assets/images/sujeira-icon.png'),
 };
+
+const BACKGROUNDS = {
+  HOUSE: {
+    DAY: require('../assets/images/house-scenery-Day.jpg'),
+    NIGHT: require('../assets/images/house-scenery-Night.jpg'),
+  },
+
+  JAPAN: {
+    DAY: require('../assets/images/japan-Scenery-DAY.jpg'),
+    NIGHT: require('../assets/images/japan-Scenery-NIGHT.jpg'),
+  },
+
+  IF: {
+    DAY: require('../assets/images/IF-scenery-DAY.png'),
+    NIGHT: require('../assets/images/IF-scenery-NIGHT.png'),
+  },
+};
+
+//Isso aqui é pra testar, basta trocar o final
+const currentBackground = BACKGROUNDS.HOUSE;
+//pode se tornar um BACKGROUNDS[selectedScenario];
+
+//ajeitando o background do IF
+const isIFBackground = currentBackground === BACKGROUNDS.IF;
+
+const SLEEP_BUTTON_ICONS = {
+  DORMIR: require('../assets/images/luzApagada-Icon.png'),
+  ACORDAR: require('../assets/images/luzAcesa-Icon.png'),
+};
+
+interface ProgressBarProps {
+  emoji: string;
+  value: number; 
+  color: string;
+}
+
+function ProgressBar({ emoji, value, color }: ProgressBarProps) {
+  const percentage = Math.min(Math.max(value * 100, 0), 100);
+
+  return (
+    <View style={styles.barContainer}>
+      <Text style={styles.barEmoji}>{emoji}</Text>
+      <View style={styles.barTrack}>
+        <View style={[styles.barFill, { width: `${percentage}%`, backgroundColor: color }]} />
+      </View>
+    </View>
+  );
+}
 
 export default function App() {
   const {
@@ -89,8 +140,12 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ImageBackground 
-        source={require('../assets/images/house-scenery-Day.jpg')} 
-        style={styles.backgroundImage}
+        source={tama.isSleeping
+      ? currentBackground.NIGHT
+      : currentBackground.DAY} 
+        style={ isIFBackground
+      ? styles.ifBackgroundImage
+      : styles.backgroundImage}
         resizeMode="cover"
       >
         <SafeAreaView style={styles.container}>
@@ -100,7 +155,7 @@ export default function App() {
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap'}}>
           {rewards.map((reward, index) => {
-              return <Image key={index} source={isEligibleFor(tama, reward) ? reward.resource : LOCKPAD} style={{width: 100, height: 100, borderWidth: 1, borderColor: 'red'}} resizeMode="contain" />;
+              return <Image key={index} source={isEligibleFor(tama, reward) ? reward.resource : LOCKPAD} style={{width: 100, height: 100}} resizeMode="contain" />;
           })}
           </View>
           
@@ -141,7 +196,7 @@ export default function App() {
                   animatedFeedStyle
                 ]}
               >
-                <Image source={require('../assets/images/burger-5.png')} style={styles.actionImage} resizeMode="contain" />
+                <Image source={require('../assets/images/coxinha.png')} style={styles.actionImage} resizeMode="contain" />
               </Animated.View>
             </GestureDetector>
 
@@ -151,13 +206,29 @@ export default function App() {
               </Animated.View>
             </GestureDetector>
 
-            <View>
-              <GestureDetector gesture={Gesture.Tap().enabled(vivo).onEnd(() => runOnJS(handleSleepAction)())}>
-                <View style={[styles.button, tama.isSleeping ? styles.buttonActive : styles.buttonDefault, !vivo && styles.buttonDisabled]}>
-                  <Text style={styles.buttonText}>{tama.isSleeping ? "Acordar" : "Dormir"}</Text>
-                </View>
-              </GestureDetector>
-            </View>
+                    <GestureDetector
+  gesture={Gesture.Tap()
+    .enabled(vivo)
+    .onEnd(() => runOnJS(handleSleepAction)())
+  }
+>
+  <View
+    style={[
+      styles.imageButtonContainer,
+      !vivo && styles.buttonDisabled
+    ]}
+  >
+    <Image
+      source={
+        tama.isSleeping
+          ? SLEEP_BUTTON_ICONS.ACORDAR
+          : SLEEP_BUTTON_ICONS.DORMIR
+      }
+      style={styles.actionImage}
+      resizeMode="contain"
+    />
+  </View>
+</GestureDetector>
           </View>
         </SafeAreaView>
       </ImageBackground>
@@ -166,7 +237,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: { flex: 1, width: '100%', height: '100%' },
+   backgroundImage: { flex: 1, width: '100%', height: '100%' },
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
   title: { fontSize: 28, fontWeight: 'bold', marginBottom: 20 },
   avatarContainer: { width: 250, height: 250, justifyContent: 'center', alignItems: 'center', marginBottom: 20, position: 'relative' },
@@ -223,4 +294,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden' 
   },
   barFill: { height: '100%', borderRadius: 7 },
+
+  ifBackgroundImage: {
+      width: '120%',
+  },
 });
