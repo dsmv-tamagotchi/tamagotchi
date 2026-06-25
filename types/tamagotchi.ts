@@ -125,10 +125,19 @@ export const isAlive = (tamagotchi: Readonly<Tamagotchi>): boolean => {
 export const TICK_MS = 5000;
 
 export const passTime = (tamagotchi: Readonly<Tamagotchi>, ticks: number = 1): Tamagotchi => {
-    if (tamagotchi.isSleeping || ticks <= 0) {
-        return tamagotchi;
-    };
 
+  if (ticks <= 0) return tamagotchi;
+
+  // Se ele estiver dormindo, recupera energia progressivamente a cada tick
+  if (tamagotchi.isSleeping) {
+    const energyRecoveryPerTick = 0.05 * ticks;
+
+    return increaseExperience({
+      ...tamagotchi,
+      energy: clamp(tamagotchi.energy + energyRecoveryPerTick, 0, 1),
+    });
+  }
+  
     return increaseExperience({
         ...tamagotchi,
         energy: clamp(tamagotchi.energy - (0.01 * ticks), 0, 1),
